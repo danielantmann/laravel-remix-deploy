@@ -3,11 +3,16 @@ FROM node:18 AS frontend
 
 WORKDIR /app
 
-# Copy full repo first
-COPY . .
+# Copy only package files first
+COPY package.json package-lock.json ./
+RUN npm ci
 
-# Install JS dependencies and build assets
-RUN npm ci && npm run build
+# Copy only frontend-related files
+COPY resources ./resources
+COPY vite.config.js ./
+
+# Build assets
+RUN npm run build
 
 
 # Stage 2: PHP + Laravel
@@ -27,10 +32,10 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
 
-# Copy full repo again
+# Copy full repo
 COPY . .
 
-# ✅ Copy Vite build AFTER repo is in place
+# Copy Vite build
 COPY --from=frontend /app/public/build /app/public/build
 
 # Install PHP dependencies
@@ -39,7 +44,7 @@ RUN composer install --no-dev --optimize-autoloader
 # Create SQLite database
 RUN mkdir -p /app/database && touch /app/database/database.sqlite
 
-# Set permissions
+# Permissions
 RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache /app/database
 
 EXPOSE 8000
