@@ -10,14 +10,16 @@ ARG CACHE_BREAKER=1
 COPY package.json package-lock.json ./
 RUN npm ci
 
-# Copy only frontend source
+# Copy frontend source
 COPY resources ./resources
 COPY vite.config.js ./
+COPY tailwind.config.js ./
+COPY postcss.config.js ./
 
 # Build assets
 RUN npm run build
 
-# 👇 PARCHE: mover el manifest donde Laravel lo espera
+# Move manifest where Laravel expects it
 RUN mv /app/public/build/.vite/manifest.json /app/public/build/manifest.json
 
 
