@@ -1,6 +1,18 @@
+# Stage 1: Build frontend assets
+FROM node:18 AS frontend
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY . .
+RUN npm run build
+
+
+# Stage 2: PHP + Laravel
 FROM php:8.2-fpm
 
-# Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
@@ -9,14 +21,8 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     sqlite3 \
     libsqlite3-dev \
-    curl \
     && docker-php-ext-install pdo pdo_mysql pdo_sqlite zip
 
-# Install Node.js (LTS)
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
-    && apt-get install -y nodejs
-
-# Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
@@ -24,11 +30,11 @@ WORKDIR /app
 # Copy project files
 COPY . .
 
+# 🔥 Copy built assets from frontend stage
+COPY --from=frontend /app/public/build /app/public/build
+
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
-
-# Install JS dependencies and build assets
-RUN npm ci && npm run build
 
 # Create SQLite database inside container
 RUN mkdir -p /app/database && touch /app/database/database.sqlite
