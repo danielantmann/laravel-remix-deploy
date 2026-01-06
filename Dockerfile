@@ -3,11 +3,14 @@ FROM node:18 AS frontend
 
 WORKDIR /app
 
-# Copy only package files first
+# Force cache bust
+ARG CACHE_BREAKER=1
+
+# Copy only package files
 COPY package.json package-lock.json ./
 RUN npm ci
 
-# Copy only frontend-related files
+# Copy only frontend source
 COPY resources ./resources
 COPY vite.config.js ./
 
