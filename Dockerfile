@@ -3,11 +3,11 @@ FROM node:18 AS frontend
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
-RUN npm ci
-
+# Copy full repo first
 COPY . .
-RUN npm run build
+
+# Install JS dependencies and build assets
+RUN npm ci && npm run build
 
 
 # Stage 2: PHP + Laravel
@@ -27,19 +27,19 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
 
-# Copy project files
+# Copy full repo again
 COPY . .
 
-# 🔥 Copy built assets from frontend stage
+# ✅ Copy Vite build AFTER repo is in place
 COPY --from=frontend /app/public/build /app/public/build
 
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Create SQLite database inside container
+# Create SQLite database
 RUN mkdir -p /app/database && touch /app/database/database.sqlite
 
-# Permissions
+# Set permissions
 RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache /app/database
 
 EXPOSE 8000
