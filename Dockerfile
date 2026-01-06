@@ -17,6 +17,9 @@ COPY vite.config.js ./
 # Build assets
 RUN npm run build
 
+# 👇 PARCHE: mover el manifest donde Laravel lo espera
+RUN mv /app/public/build/.vite/manifest.json /app/public/build/manifest.json
+
 
 # Stage 2: PHP + Laravel
 FROM php:8.2-fpm
